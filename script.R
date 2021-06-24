@@ -83,8 +83,8 @@ plot.all <- function(){plotit(data, data$All.crime,
 plot.all()
 
 #all text
-text(62, 1700, "First lockdown \n 26/03/20", srt = 90)
-text(72, 2000, "Stay-at-home order \n 05/01/21", srt = 90)
+text(61.5, 3500, "First lockdown \n 26/03/20", srt = 90, cex = 0.75)
+text(71.5, 3500, "Stay-at-home order \n 05/01/21", srt = 90, cex = 0.75)
 
 #save figure: 9.49 x 3.60 inches
 
@@ -129,7 +129,7 @@ plot.har()
 ##drugs, damage and public order
 data <- data %>%
   mutate(order.weapons = Public.order.offences + Possession.of.weapons.offences)
-par(mfrow=c(2,2))
+par(mfrow=c(2,2), mai = c(0.7, 0.5, 0.5, 0.1))
 
 #model and plot possession of drugs
 modelit(data, data$Possession.of.drugs,
@@ -169,7 +169,7 @@ plot.damage()
 data <- data %>%
   mutate(domestic.burg = Theft...burglary.residential + Theft...domestic.burglary,
          nondomestic.burg = Theft...burglary.business...community + Theft...non.domestic.burglary)
-par(mfrow=c(2,1))
+par(mfrow=c(1,2), mai = c(0.7, 0.5, 0.5, 0.1))
 
 #model and plot domestic burglary
 modelit(data, data$domestic.burg,
@@ -187,10 +187,10 @@ plot.burgl.nondom <- function(){plotit(data, data$nondomestic.burg,
                                        data$T, data$D1, data$P1, data$D2, data$P2, "Non-residential burglary")}
 plot.burgl.nondom()
 
-#save figure: 6.49 x 5.60 inches
+#save figure: 9.49 x 3.60 inches
 
 ##theft and robbery
-par(mfrow=c(3,2))
+par(mfrow=c(3,2), mai = c(0.5, 0.3, 0.5, 0.1))
 
 #model and plot theft from the person
 modelit(data, data$Theft.from.the.person,
@@ -272,7 +272,7 @@ data <- data %>%
            Prime.Bank.Guarantees + Time.Shares.and.Holiday.Club.Fraud +
            Other.Financial.Investment
   )
-par(mfrow=c(3,2))
+par(mfrow=c(3,2), mai = c(0.5, 0.3, 0.5, 0.1))
 
 #model and plot online shopping fraud
 modelit(data, data$Online.Shopping.and.Auctions,
