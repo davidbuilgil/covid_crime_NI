@@ -66,6 +66,20 @@ plotit <- function(dataset, Y, T, D1, P1, D2, P2, title){
   
 }
 
+##all crime
+
+#plot all crime
+plot.all <- function(){plotit(data, data$All.crime,
+                                data$T, data$D1, data$P1, 
+                                data$D2, data$P2, "All crime")}
+plot.all()
+
+#all text
+text(52, 1000, "First lockdown \n 26/03/20")
+text(79, 2000, "Stay-at-home order \n 05/01/21")
+
+#save figure: 9.49 x 3.60 inches
+
 ##violence
 par(mfrow=c(2,2))
 
@@ -101,6 +115,8 @@ modelit(data, data$Harassment,
 plot.har <- function(){plotit(data, data$Harassment,
                               data$T, data$D1, data$P1, data$D2, data$P2, "Harassment")}
 plot.har()
+
+#save figure: 9.49 x 5.60 inches
 
 ##drugs, damage and public order
 data <- data %>%
@@ -139,6 +155,8 @@ plot.damage <- function(){plotit(data, data$Criminal.damage,
                                  data$T, data$D1, data$P1, data$D2, data$P2, "Criminal damage")}
 plot.damage()
 
+#save figure: 9.49 x 5.60 inches
+
 ##burglary
 data <- data %>%
   mutate(domestic.burg = Theft...burglary.residential + Theft...domestic.burglary,
@@ -160,6 +178,8 @@ modelit(data, data$nondomestic.burg,
 plot.burgl.nondom <- function(){plotit(data, data$nondomestic.burg,
                                        data$T, data$D1, data$P1, data$D2, data$P2, "Non-residential burglary")}
 plot.burgl.nondom()
+
+#save figure: 6.49 x 5.60 inches
 
 ##theft and robbery
 par(mfrow=c(3,2))
@@ -211,6 +231,8 @@ modelit(data, data$All.other.theft.offences,
 plot.theft.o <- function(){plotit(data, data$All.other.theft.offences,
                                   data$T, data$D1, data$P1, data$D2, data$P2, "All other theft")}
 plot.theft.o()
+
+#save figure: 8.49 x 5.60 inches
 
 ##fraud and cyber
 data <- data %>%
@@ -291,3 +313,5 @@ modelit(data, data$cyberdependent,
 plot.cyber <- function(){plotit(data, data$cyberdependent,
                                 data$T, data$D1, data$P1, data$D2, data$P2, "Cyber-dependent crime")}
 plot.cyber()
+
+#save figure: 8.49 x 5.60 inches
