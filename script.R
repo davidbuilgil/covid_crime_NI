@@ -14,6 +14,9 @@ library(dplyr)
 #load data
 data <- read.csv(here("data/data_rev.csv"))
 
+#save dates
+dates <- data$X
+
 #function to obtain model results
 modelit <- function(dataset, Y, T, D1, P1, D2, P2){
   
@@ -51,10 +54,15 @@ plotit <- function(dataset, Y, T, D1, P1, D2, P2, title){
   plot( Y,
         bty = "n",
         col = gray(0.5, 0.5), pch=19,
-        ylim = c(0, max(Y)), xlim=c(0, length(dataset)),
-        xlab = "Time (months)", 
+        ylim = c(0, max(Y)), xlim=c(0, nrow(dataset)),
+        xlab = "", xaxt = "n",
         ylab = "Crime",
         main = title)
+  
+  #add dates
+  axis(1, at  = 1:length(dates), 
+       labels = c(dates),
+       cex.axis = 0.9, las=2)
   
   #draw lines
   lines( rep(1:59), pred1[1:59], col = "dodgerblue4", lwd = 3 )
@@ -75,13 +83,13 @@ plot.all <- function(){plotit(data, data$All.crime,
 plot.all()
 
 #all text
-text(52, 1000, "First lockdown \n 26/03/20")
-text(79, 2000, "Stay-at-home order \n 05/01/21")
+text(62, 1700, "First lockdown \n 26/03/20", srt = 90)
+text(72, 2000, "Stay-at-home order \n 05/01/21", srt = 90)
 
 #save figure: 9.49 x 3.60 inches
 
 ##violence
-par(mfrow=c(2,2))
+par(mfrow=c(2,2), mai = c(0.7, 0.5, 0.5, 0.1))
 
 #model and plot violence injury
 modelit(data, data$Violence.with.injury..including.homicide...death.serious.injury.by.unlawful.driving.,
