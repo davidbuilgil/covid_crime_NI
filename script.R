@@ -150,7 +150,7 @@ modelit(data, data$domestic.burg,
         data$T, data$D1, data$P1, data$D2, data$P2)
 
 plot.burgl.dom <- function(){plotit(data, data$domestic.burg,
-                                    data$T, data$D1, data$P1, data$D2, data$P2, "Domestic burglary")}
+                                    data$T, data$D1, data$P1, data$D2, data$P2, "Residential burglary")}
 plot.burgl.dom()
 
 #model and plot non-domestic burglary
@@ -158,7 +158,7 @@ modelit(data, data$nondomestic.burg,
         data$T, data$D1, data$P1, data$D2, data$P2)
 
 plot.burgl.nondom <- function(){plotit(data, data$nondomestic.burg,
-                                       data$T, data$D1, data$P1, data$D2, data$P2, "Non-domestic burglary")}
+                                       data$T, data$D1, data$P1, data$D2, data$P2, "Non-residential burglary")}
 plot.burgl.nondom()
 
 ##theft and robbery
