@@ -9,6 +9,8 @@ rm(list=ls())
 
 #load packages
 library(here)
+library(tseries)
+library(forecast)
 library(dplyr)
 
 #load data
@@ -25,6 +27,44 @@ modelit <- function(dataset, Y, T, D1, P1, D2, P2, D3, P3){
   
   #print model results
   summary(ts)
+  
+}
+
+#function to obtain ARIMA results
+arimait.model <- function(dataset, Y, T, D1, P1, D2, P2, D3, P3){
+  
+  #convert crime trend to time series
+  crime.ts <- ts(Y)
+  
+  #create dataframe with covariates
+  xreg <- cbind(D1, P1, D2, P2, D3, P3)
+  
+  #estimate ARIMA
+  arima <- auto.arima(y = crime.ts, xreg = xreg)
+  
+  #print result
+  summary(arima)
+  
+}
+
+arimait.coef <- function(dataset, Y, T, D1, P1, D2, P2, D3, P3){
+  
+  #convert crime trend to time series
+  crime.ts <- ts(Y)
+  
+  #create dataframe with covariates
+  xreg <- cbind(D1, P1, D2, P2, D3, P3)
+  
+  #estimate ARIMA
+  arima <- auto.arima(y = crime.ts, xreg = xreg)
+  
+  #calculate coefficients and 95% CI
+  arima.result <- cbind(coef = arima$coef,
+                        LI = arima$coef - 1.06 * sqrt(diag(vcov(arima))),
+                        UI = arima$coef + 1.06 * sqrt(diag(vcov(arima))))
+  
+  #print result
+  round(arima.result, digits = 1)
   
 }
 
@@ -101,6 +141,12 @@ par(mfrow=c(2,2), mai = c(0.7, 0.5, 0.5, 0.1))
 modelit(data, data$Violence.with.injury..including.homicide...death.serious.injury.by.unlawful.driving.,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
+arimait.model(data, data$Violence.with.injury..including.homicide...death.serious.injury.by.unlawful.driving.,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$Violence.with.injury..including.homicide...death.serious.injury.by.unlawful.driving.,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
 plot.vio.i <- function(){plotit(data, data$Violence.with.injury..including.homicide...death.serious.injury.by.unlawful.driving.,
                                 data$T, data$D1, data$P1, 
                                 data$D2, data$P2, data$D3, data$P3, "Violence with injury")}
@@ -109,6 +155,12 @@ plot.vio.i()
 #plot violence no injury
 modelit(data, data$Violence.without.injury,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.model(data, data$Violence.without.injury,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$Violence.without.injury,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 plot.vio.ni <- function(){plotit(data, data$Violence.without.injury,
                                  data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3, 
@@ -119,6 +171,12 @@ plot.vio.ni()
 modelit(data, data$Sexual.offences,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
+arimait.model(data, data$Sexual.offences,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$Sexual.offences,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
 plot.sex <- function(){plotit(data, data$Sexual.offences,
                               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
                               "Sexual offences")}
@@ -127,6 +185,12 @@ plot.sex()
 #Harassment
 modelit(data, data$Harassment,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.model(data, data$Harassment,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$Harassment,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 plot.har <- function(){plotit(data, data$Harassment,
                               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3, 
@@ -144,6 +208,12 @@ par(mfrow=c(2,2), mai = c(0.7, 0.5, 0.5, 0.1))
 modelit(data, data$Possession.of.drugs,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
+arimait.model(data, data$Possession.of.drugs,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$Possession.of.drugs,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
 plot.drug.po <- function(){plotit(data, data$Possession.of.drugs,
                                   data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
                                   "Possession of drugs")}
@@ -152,6 +222,12 @@ plot.drug.po()
 #model and plot drug trafficking
 modelit(data, data$Trafficking.of.drugs,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.model(data, data$Trafficking.of.drugs,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$Trafficking.of.drugs,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 plot.drug.tr <- function(){plotit(data, data$Trafficking.of.drugs,
                                   data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
@@ -162,6 +238,12 @@ plot.drug.tr()
 modelit(data, data$order.weapons,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
+arimait.model(data, data$order.weapons,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$order.weapons,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
 plot.order <- function(){plotit(data, data$order.weapons,
                                 data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
                                 "Public order and possession of weapons")}
@@ -170,6 +252,12 @@ plot.order()
 #model and plot criminal damage
 modelit(data, data$Criminal.damage,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.model(data, data$Criminal.damage,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$Criminal.damage,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 plot.damage <- function(){plotit(data, data$Criminal.damage,
                                  data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
@@ -188,6 +276,12 @@ par(mfrow=c(1,2), mai = c(0.7, 0.5, 0.5, 0.1))
 modelit(data, data$domestic.burg,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
+arimait.model(data, data$domestic.burg,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$domestic.burg,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
 plot.burgl.dom <- function(){plotit(data, data$domestic.burg,
                                     data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
                                     "Residential burglary")}
@@ -196,6 +290,12 @@ plot.burgl.dom()
 #model and plot non-domestic burglary
 modelit(data, data$nondomestic.burg,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.model(data, data$nondomestic.burg,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$nondomestic.burg,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 plot.burgl.nondom <- function(){plotit(data, data$nondomestic.burg,
                                        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
@@ -211,6 +311,12 @@ par(mfrow=c(3,2), mai = c(0.5, 0.3, 0.5, 0.1))
 modelit(data, data$Theft.from.the.person,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
+arimait.model(data, data$Theft.from.the.person,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$Theft.from.the.person,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
 plot.theft.p <- function(){plotit(data, data$Theft.from.the.person,
                                   data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
                                   "Theft from person")}
@@ -219,6 +325,12 @@ plot.theft.p()
 #model and plot bicycle theft
 modelit(data, data$Bicycle.theft,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.model(data, data$Bicycle.theft,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$Bicycle.theft,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 plot.theft.b <- function(){plotit(data, data$Bicycle.theft,
                                   data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
@@ -229,6 +341,12 @@ plot.theft.b()
 modelit(data, data$Theft...vehicle.offences,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
+arimait.model(data, data$Theft...vehicle.offences,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$Theft...vehicle.offences,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
 plot.theft.v <- function(){plotit(data, data$Theft...vehicle.offences,
                                   data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
                                   "Theft of/from vehicle")}
@@ -237,6 +355,12 @@ plot.theft.v()
 #model and plot shoplifting
 modelit(data, data$Theft...shoplifting,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.model(data, data$Theft...shoplifting,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$Theft...shoplifting,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 plot.shoplift <- function(){plotit(data, data$Theft...shoplifting,
                                    data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
@@ -247,6 +371,12 @@ plot.shoplift()
 modelit(data, data$Robbery,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
+arimait.model(data, data$Robbery,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$Robbery,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
 plot.robbery <- function(){plotit(data, data$Robbery,
                                   data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
                                   "Robbery")}
@@ -255,6 +385,12 @@ plot.robbery()
 #model and plot all other theft
 modelit(data, data$All.other.theft.offences,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.model(data, data$All.other.theft.offences,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$All.other.theft.offences,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 plot.theft.o <- function(){plotit(data, data$All.other.theft.offences,
                                   data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
@@ -285,7 +421,7 @@ data <- data %>%
            Other.Consumer.Non.Investment.Fraud + Computer.Software.Service.Fraud,
          cyberdependent = Denial.of.Service.Attack + Denial.of.Service.Attack..Extortion +
            Hacking...Server + Hacking...Personal + Hacking...Social.Media.and.Email +
-           Hacking...PBX...Dial.Through + Hacking.Extortion,
+           Hacking...PBX...Dial.Through + Hacking.Extortion + Computer.Virus...Malware...Spyware,
          investment.banking.credit.fraud = Cheque..Plastic.Card.and.Online.Bank.Accounts..not.PSP. +
            Application..Fraud..excluding.Mortgages. + Mortgage.Related.Fraud +
            Mandate.Fraud + Counterfeit.Cashiers.Cheques +
@@ -299,6 +435,12 @@ par(mfrow=c(3,2), mai = c(0.5, 0.3, 0.5, 0.1))
 modelit(data, data$Online.Shopping.and.Auctions,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
+arimait.model(data, data$Online.Shopping.and.Auctions,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$Online.Shopping.and.Auctions,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
 plot.online.shop <- function(){plotit(data, data$Online.Shopping.and.Auctions,
                                       data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
                                       "Online shopping fraud")}
@@ -307,6 +449,12 @@ plot.online.shop()
 #model and plot advance fee fraud
 modelit(data, data$advance.fee.fraud,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.model(data, data$advance.fee.fraud,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$advance.fee.fraud,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 plot.advance.fee <- function(){plotit(data, data$advance.fee.fraud,
                                       data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
@@ -317,6 +465,12 @@ plot.advance.fee()
 modelit(data, data$consumer.fraud.exc.on.shop,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
+arimait.model(data, data$consumer.fraud.exc.on.shop,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$consumer.fraud.exc.on.shop,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
 plot.consumer.fraud <- function(){plotit(data, data$consumer.fraud.exc.on.shop,
                                          data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
                                          "Consumer fraud")}
@@ -325,6 +479,12 @@ plot.consumer.fraud()
 #model and plot investment and credit fraud
 modelit(data, data$investment.banking.credit.fraud,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.model(data, data$investment.banking.credit.fraud,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$investment.banking.credit.fraud,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 plot.invest.fraud <- function(){plotit(data, data$investment.banking.credit.fraud,
                                        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
@@ -335,6 +495,12 @@ plot.invest.fraud()
 modelit(data, data$other.fraud,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
+arimait.model(data, data$other.fraud,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$other.fraud,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
 plot.other.fraud <- function(){plotit(data, data$other.fraud,
                                       data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
                                       "Other fraud")}
@@ -343,6 +509,12 @@ plot.other.fraud()
 #model and plot cyber-dependent crime
 modelit(data, data$cyberdependent,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.model(data, data$cyberdependent,
+        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.coef(data, data$cyberdependent,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 plot.cyber <- function(){plotit(data, data$cyberdependent,
                                 data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
