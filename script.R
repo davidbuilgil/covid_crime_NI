@@ -522,3 +522,136 @@ plot.cyber <- function(){plotit(data, data$cyberdependent,
 plot.cyber()
 
 #save figure: 8.49 x 5.60 inches
+
+#load Google Mobility data
+mobility.2020 <- read.csv(here("data/2020_GB_Region_Mobility_Report.csv"))
+mobility.2021 <- read.csv(here("data/2021_GB_Region_Mobility_Report.csv"))
+mobility <- rbind(mobility.2020, mobility.2021)
+
+#select Belfast
+mobility <- mobility %>%
+  filter(sub_region_1 == "Belfast")
+
+#remove June
+mobility <- mobility[1:472, ]
+
+#plot Google Mobility trends
+par(mfrow=c(3,2), mai = c(0.1, 0.3, 0.2, 0.1))
+
+plot( mobility$retail_and_recreation_percent_change_from_baseline,
+        bty = "n",
+        col = gray(0.5, 0.5), pch=19,
+        xlab = "", xaxt = "n",
+        ylab = "% change",
+        main = "Retails and recreation")
+
+abline(h = 0, col = "grey")
+abline( v = 41, col="darkorange2", lty = 2 )
+abline( v = 245, col="darkorange2", lty = 2 )
+abline( v = 329, col="darkorange2", lty = 2 )
+
+plot( mobility$grocery_and_pharmacy_percent_change_from_baseline,
+      bty = "n",
+      col = gray(0.5, 0.5), pch=19,
+      xlab = "", xaxt = "n",
+      ylab = "% change",
+      main = "Grocery and pharmacy")
+
+abline(h = 0, col = "grey")
+abline( v = 41, col="darkorange2", lty = 2 )
+abline( v = 245, col="darkorange2", lty = 2 )
+abline( v = 329, col="darkorange2", lty = 2 )
+
+text(20, -65, "First lockdown \n 26/03/20", srt = 90, cex = 0.9)
+text(223, -60, "Second lockdown \n 16/10/20", srt = 90, cex = 0.9)
+text(355, -65, "Stay-at-home \n order \n 08/01/21", srt = 90, cex = 0.9)
+
+plot( mobility$parks_percent_change_from_baseline,
+      bty = "n",
+      col = gray(0.5, 0.5), pch=19,
+      xlab = "", xaxt = "n",
+      ylab = "% change",
+      main = "Parks")
+
+abline(h = 0, col = "grey")
+abline( v = 41, col="darkorange2", lty = 2 )
+abline( v = 245, col="darkorange2", lty = 2 )
+abline( v = 329, col="darkorange2", lty = 2 )
+
+plot( mobility$transit_stations_percent_change_from_baseline,
+      bty = "n",
+      col = gray(0.5, 0.5), pch=19,
+      xlab = "", xaxt = "n",
+      ylab = "% change",
+      main = "Transit stations")
+
+abline(h = 0, col = "grey")
+abline( v = 41, col="darkorange2", lty = 2 )
+abline( v = 245, col="darkorange2", lty = 2 )
+abline( v = 329, col="darkorange2", lty = 2 )
+
+plot( mobility$workplaces_percent_change_from_baseline,
+      bty = "n",
+      col = gray(0.5, 0.5), pch=19,
+      xlab = "", xaxt = "n",
+      ylab = "% change",
+      main = "Workplaces")
+
+abline(h = 0, col = "grey")
+abline( v = 41, col="darkorange2", lty = 2 )
+abline( v = 245, col="darkorange2", lty = 2 )
+abline( v = 329, col="darkorange2", lty = 2 )
+
+plot( mobility$residential_percent_change_from_baseline,
+      bty = "n",
+      col = gray(0.5, 0.5), pch=19,
+      xlab = "", xaxt = "n",
+      ylab = "% change",
+      main = "Residential")
+
+abline(h = 0, col = "grey")
+abline( v = 41, col="darkorange2", lty = 2 )
+abline( v = 245, col="darkorange2", lty = 2 )
+abline( v = 329, col="darkorange2", lty = 2 )
+
+#save figure: 8.49 x 5.60 inches
+
+par(mfrow=c(3,2), mai = c(0.1, 0.3, 0.2, 0.1))
+
+plot( mobility$workplaces_percent_change_from_baseline,
+      bty = "n",
+      col = gray(0.5, 0.5), pch=19,
+      xlab = "", xaxt = "n",
+      ylab = "% change",
+      main = "Workplaces")
+
+abline(h = 0, col = "grey")
+abline( v = 41, col="darkorange2", lty = 2 )
+abline( v = 245, col="darkorange2", lty = 2 )
+abline( v = 329, col="darkorange2", lty = 2 )
+
+axis(side=1, at = c(seq(from = 0, to = length(mobility$date2), by = 8)), labels = FALSE)
+axis(1, at  = 1:length(mobility$date2), 
+     labels = c(mobility$date2),
+     cex.axis = 1, las = 2,
+     tick = FALSE)
+
+plot( mobility$residential_percent_change_from_baseline,
+      bty = "n",
+      col = gray(0.5, 0.5), pch=19,
+      xlab = "", xaxt = "n",
+      ylab = "% change",
+      main = "Residential")
+
+abline(h = 0, col = "grey")
+abline( v = 41, col="darkorange2", lty = 2 )
+abline( v = 245, col="darkorange2", lty = 2 )
+abline( v = 329, col="darkorange2", lty = 2 )
+
+axis(side=1, at = c(seq(from = 0, to = length(mobility$date2), by = 8)), labels = FALSE)
+axis(1, at  = 1:length(mobility$date2), 
+     labels = c(mobility$date2),
+     cex.axis = 1, las = 2,
+     tick = FALSE)
+
+#save figure: 8.49 x 5.60 inches
