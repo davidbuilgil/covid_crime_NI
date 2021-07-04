@@ -11,6 +11,7 @@ rm(list=ls())
 library(here)
 library(tseries)
 library(forecast)
+library(car)
 library(dplyr)
 
 #load data
@@ -47,6 +48,36 @@ arimait.model <- function(dataset, Y, T, D1, P1, D2, P2, D3, P3){
   
 }
 
+#function Durbin Watson test (a value between 1.5 and 2.5 indicates no autocorrelation)
+#function Ljung-Box (p-value larger than 0.05 indicates independendency of residuals)
+#function KPSS (p-value larger 0.05 indicate data is stationary: good)
+arimait.tests <- function(dataset, Y, T, D1, P1, D2, P2, D3, P3){
+  
+  #convert crime trend to time series
+  crime.ts <- ts(Y)
+  
+  #create dataframe with covariates
+  xreg <- cbind(D1, P1, D2, P2, D3, P3)
+  
+  #estimate ARIMA
+  arima <- auto.arima(y = crime.ts, xreg = xreg)
+  
+  #save results
+  tests <- as.data.frame(cbind(
+    durbinWatsonTest(as.vector(arima$residuals)),
+    Box.test(as.vector(arima$residuals), type = c("Ljung-Box"))$p.value,
+    kpss.test(arima$fitted, null = "Trend")$p.value
+  ))
+  
+  #print results
+  tests %>%
+    summarise(durbin.watson = ifelse( V1 > 1.5 & V1 < 2.5, "tick", "not.tick"),
+              ljung.box = ifelse( V2 > 0.05, "tick", "not.tick"),
+              kpss = ifelse( V3 > 0.05, "tick", "not.tick"))
+  
+}
+
+#function ARIMA coefficients
 arimait.coef <- function(dataset, Y, T, D1, P1, D2, P2, D3, P3){
   
   #convert crime trend to time series
@@ -144,8 +175,26 @@ modelit(data, data$Violence.with.injury..including.homicide...death.serious.inju
 arimait.model(data, data$Violence.with.injury..including.homicide...death.serious.injury.by.unlawful.driving.,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-arimait.coef(data, data$Violence.with.injury..including.homicide...death.serious.injury.by.unlawful.driving.,
+arimait.tests(data, data$Violence.with.injury..including.homicide...death.serious.injury.by.unlawful.driving.,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+#estimate model (1, 1, 0)
+arima <- arima(x = ts(data$Violence.with.injury..including.homicide...death.serious.injury.by.unlawful.driving.), 
+               xreg = cbind(data$D1, data$P1, data$D2, data$P2, data$D3, data$P3),
+               order = c(1, 1, 0))
+
+durbinWatsonTest(as.vector(arima$residuals)) #tick
+
+Box.test(as.vector(arima$residuals), type = c("Ljung-Box")) #tick
+
+kpss.test(fitted(arima), null = "Trend") #tick
+
+summary(arima)
+
+round(cbind(coef = arima$coef,
+            LI = arima$coef - 1.06 * sqrt(diag(vcov(arima))),
+            UI = arima$coef + 1.06 * sqrt(diag(vcov(arima)))), 
+      digits = 1)
 
 plot.vio.i <- function(){plotit(data, data$Violence.with.injury..including.homicide...death.serious.injury.by.unlawful.driving.,
                                 data$T, data$D1, data$P1, 
@@ -158,6 +207,9 @@ modelit(data, data$Violence.without.injury,
 
 arimait.model(data, data$Violence.without.injury,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.tests(data, data$Violence.without.injury,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 arimait.coef(data, data$Violence.without.injury,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
@@ -174,28 +226,64 @@ modelit(data, data$Sexual.offences,
 arimait.model(data, data$Sexual.offences,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-arimait.coef(data, data$Sexual.offences,
-        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+arimait.tests(data, data$Sexual.offences,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+#estimate model (1, 1, 0)
+arima <- arima(x = ts(data$Sexual.offences), 
+               xreg = cbind(data$D1, data$P1, data$D2, data$P2, data$D3, data$P3),
+               order = c(1, 1, 0))
+
+durbinWatsonTest(as.vector(arima$residuals)) #tick
+
+Box.test(as.vector(arima$residuals), type = c("Ljung-Box")) #tick
+
+kpss.test(fitted(arima), null = "Trend") #tick
+
+summary(arima)
+
+round(cbind(coef = arima$coef,
+            LI = arima$coef - 1.06 * sqrt(diag(vcov(arima))),
+            UI = arima$coef + 1.06 * sqrt(diag(vcov(arima)))), 
+      digits = 1)
 
 plot.sex <- function(){plotit(data, data$Sexual.offences,
                               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
                               "Sexual offences")}
 plot.sex()
 
-#Harassment
-modelit(data, data$Harassment,
+#model and plot robbery
+modelit(data, data$Robbery,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-arimait.model(data, data$Harassment,
-        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
-
-arimait.coef(data, data$Harassment,
+arimait.model(data, data$Robbery,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-plot.har <- function(){plotit(data, data$Harassment,
-                              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3, 
-                              "Harassment")}
-plot.har()
+arimait.tests(data, data$Robbery,
+           data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+#estimate model (1, 1, 0)
+arima <- arima(x = ts(data$Robbery), 
+               xreg = cbind(data$D1, data$P1, data$D2, data$P2, data$D3, data$P3),
+               order = c(1, 1, 0))
+
+durbinWatsonTest(as.vector(arima$residuals)) #tick
+
+Box.test(as.vector(arima$residuals), type = c("Ljung-Box")) #tick
+
+kpss.test(fitted(arima), null = "Trend") #tick
+
+summary(arima)
+
+round(cbind(coef = arima$coef,
+            LI = arima$coef - 1.06 * sqrt(diag(vcov(arima))),
+            UI = arima$coef + 1.06 * sqrt(diag(vcov(arima)))), 
+      digits = 1)
+
+plot.robbery <- function(){plotit(data, data$Robbery,
+                                  data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
+                                  "Robbery")}
+plot.robbery()
 
 #save figure: 9.49 x 5.60 inches
 
@@ -210,6 +298,9 @@ modelit(data, data$Possession.of.drugs,
 
 arimait.model(data, data$Possession.of.drugs,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.tests(data, data$Possession.of.drugs,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 arimait.coef(data, data$Possession.of.drugs,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
@@ -226,8 +317,26 @@ modelit(data, data$Trafficking.of.drugs,
 arimait.model(data, data$Trafficking.of.drugs,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-arimait.coef(data, data$Trafficking.of.drugs,
+arimait.tests(data, data$Trafficking.of.drugs,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+#estimate model (1, 1, 0)
+arima <- arima(x = ts(data$Trafficking.of.drugs), 
+                    xreg = cbind(data$D1, data$P1, data$D2, data$P2, data$D3, data$P3),
+               order = c(1, 1, 0))
+
+durbinWatsonTest(as.vector(arima$residuals)) #tick
+
+Box.test(as.vector(arima$residuals), type = c("Ljung-Box")) #tick
+
+kpss.test(fitted(arima), null = "Trend") #tick
+
+summary(arima)
+
+round(cbind(coef = arima$coef,
+            LI = arima$coef - 1.06 * sqrt(diag(vcov(arima))),
+            UI = arima$coef + 1.06 * sqrt(diag(vcov(arima)))), 
+      digits = 1)
 
 plot.drug.tr <- function(){plotit(data, data$Trafficking.of.drugs,
                                   data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
@@ -241,8 +350,26 @@ modelit(data, data$order.weapons,
 arimait.model(data, data$order.weapons,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-arimait.coef(data, data$order.weapons,
+arimait.tests(data, data$order.weapons,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+#estimate model (2, 2, 0)
+arima <- arima(x = ts(data$order.weapons), 
+               xreg = cbind(data$D1, data$P1, data$D2, data$P2, data$D3, data$P3),
+               order = c(2, 2, 0))
+
+durbinWatsonTest(as.vector(arima$residuals)) #tick
+
+Box.test(as.vector(arima$residuals), type = c("Ljung-Box")) #tick
+
+kpss.test(fitted(arima), null = "Trend") #tick
+
+summary(arima)
+
+round(cbind(coef = arima$coef,
+            LI = arima$coef - 1.06 * sqrt(diag(vcov(arima))),
+            UI = arima$coef + 1.06 * sqrt(diag(vcov(arima)))), 
+      digits = 1)
 
 plot.order <- function(){plotit(data, data$order.weapons,
                                 data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
@@ -255,6 +382,9 @@ modelit(data, data$Criminal.damage,
 
 arimait.model(data, data$Criminal.damage,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.tests(data, data$Criminal.damage,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 arimait.coef(data, data$Criminal.damage,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
@@ -279,8 +409,26 @@ modelit(data, data$domestic.burg,
 arimait.model(data, data$domestic.burg,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-arimait.coef(data, data$domestic.burg,
+arimait.tests(data, data$domestic.burg,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+#estimate model (1, 1, 0)
+arima <- arima(x = ts(data$domestic.burg), 
+               xreg = cbind(data$D1, data$P1, data$D2, data$P2, data$D3, data$P3),
+               order = c(1, 1, 0))
+
+durbinWatsonTest(as.vector(arima$residuals)) #tick
+
+Box.test(as.vector(arima$residuals), type = c("Ljung-Box")) #tick
+
+kpss.test(fitted(arima), null = "Trend") #tick
+
+summary(arima)
+
+round(cbind(coef = arima$coef,
+            LI = arima$coef - 1.06 * sqrt(diag(vcov(arima))),
+            UI = arima$coef + 1.06 * sqrt(diag(vcov(arima)))), 
+      digits = 1)
 
 plot.burgl.dom <- function(){plotit(data, data$domestic.burg,
                                     data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
@@ -294,8 +442,26 @@ modelit(data, data$nondomestic.burg,
 arimait.model(data, data$nondomestic.burg,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-arimait.coef(data, data$nondomestic.burg,
+arimait.tests(data, data$nondomestic.burg,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+#estimate model (2, 2, 0)
+arima <- arima(x = ts(data$nondomestic.burg), 
+               xreg = cbind(data$D1, data$P1, data$D2, data$P2, data$D3, data$P3),
+               order = c(2, 2, 0))
+
+durbinWatsonTest(as.vector(arima$residuals)) #tick
+
+Box.test(as.vector(arima$residuals), type = c("Ljung-Box")) #tick
+
+kpss.test(fitted(arima), null = "Trend") #tick
+
+summary(arima)
+
+round(cbind(coef = arima$coef,
+            LI = arima$coef - 1.06 * sqrt(diag(vcov(arima))),
+            UI = arima$coef + 1.06 * sqrt(diag(vcov(arima)))), 
+      digits = 1)
 
 plot.burgl.nondom <- function(){plotit(data, data$nondomestic.burg,
                                        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
@@ -304,8 +470,10 @@ plot.burgl.nondom()
 
 #save figure: 9.49 x 3.60 inches
 
-##theft and robbery
-par(mfrow=c(3,2), mai = c(0.5, 0.3, 0.5, 0.1))
+##theft
+data <- data %>%
+  mutate(All.other.theft.offences = All.other.theft.offences + Theft...shoplifting)
+par(mfrow=c(2,2), mai = c(0.7, 0.5, 0.5, 0.1))
 
 #model and plot theft from the person
 modelit(data, data$Theft.from.the.person,
@@ -314,8 +482,26 @@ modelit(data, data$Theft.from.the.person,
 arimait.model(data, data$Theft.from.the.person,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-arimait.coef(data, data$Theft.from.the.person,
+arimait.tests(data, data$Theft.from.the.person,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+#estimate model (4, 3, 0)
+arima <- arima(x = ts(data$Theft.from.the.person), 
+               xreg = cbind(data$D1, data$P1, data$D2, data$P2, data$D3, data$P3),
+               order = c(4, 3, 0))
+
+durbinWatsonTest(as.vector(arima$residuals)) #tick
+
+Box.test(as.vector(arima$residuals), type = c("Ljung-Box")) #tick
+
+kpss.test(fitted(arima), null = "Trend") #tick
+
+summary(arima)
+
+round(cbind(coef = arima$coef,
+            LI = arima$coef - 1.06 * sqrt(diag(vcov(arima))),
+            UI = arima$coef + 1.06 * sqrt(diag(vcov(arima)))), 
+      digits = 1)
 
 plot.theft.p <- function(){plotit(data, data$Theft.from.the.person,
                                   data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
@@ -328,6 +514,9 @@ modelit(data, data$Bicycle.theft,
 
 arimait.model(data, data$Bicycle.theft,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.tests(data, data$Bicycle.theft,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 arimait.coef(data, data$Bicycle.theft,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
@@ -344,6 +533,9 @@ modelit(data, data$Theft...vehicle.offences,
 arimait.model(data, data$Theft...vehicle.offences,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
+arimait.tests(data, data$Theft...vehicle.offences,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
 arimait.coef(data, data$Theft...vehicle.offences,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
@@ -359,45 +551,33 @@ modelit(data, data$Theft...shoplifting,
 arimait.model(data, data$Theft...shoplifting,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-arimait.coef(data, data$Theft...shoplifting,
+arimait.tests(data, data$Theft...shoplifting,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+#estimate model (1, 2, 8)
+arima <- arima(x = ts(data$Theft...shoplifting), 
+                    xreg = cbind(data$D1, data$P1, data$D2, data$P2, data$D3, data$P3),
+                    order = c(1, 2, 8))
+
+durbinWatsonTest(as.vector(arima$residuals)) #tick
+
+Box.test(as.vector(arima$residuals), type = c("Ljung-Box")) #tick
+
+kpss.test(fitted(arima), null = "Trend") #tick
+
+summary(arima)
+
+round(cbind(coef = arima$coef,
+            LI = arima$coef - 1.06 * sqrt(diag(vcov(arima))),
+            UI = arima$coef + 1.06 * sqrt(diag(vcov(arima)))), 
+      digits = 1)
 
 plot.shoplift <- function(){plotit(data, data$Theft...shoplifting,
                                    data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
                                    "Shoplifting")}
 plot.shoplift()
 
-#model and plot robbery
-modelit(data, data$Robbery,
-        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
-
-arimait.model(data, data$Robbery,
-        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
-
-arimait.coef(data, data$Robbery,
-              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
-
-plot.robbery <- function(){plotit(data, data$Robbery,
-                                  data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
-                                  "Robbery")}
-plot.robbery()
-
-#model and plot all other theft
-modelit(data, data$All.other.theft.offences,
-        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
-
-arimait.model(data, data$All.other.theft.offences,
-        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
-
-arimait.coef(data, data$All.other.theft.offences,
-              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
-
-plot.theft.o <- function(){plotit(data, data$All.other.theft.offences,
-                                  data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
-                                  "All other theft")}
-plot.theft.o()
-
-#save figure: 8.49 x 5.60 inches
+#save figure: 9.49 x 5.60 inches
 
 ##fraud and cyber
 data <- data %>%
@@ -412,84 +592,109 @@ data <- data %>%
            Insurance.Related.Fraud + Insurance.Broker.Fraud +
            Telecom.Industry.Fraud..Misuse.of.Contracts. +
            Corporate.Employee.Fraud + Business.Trading.Fraud + 
-           DVLA.Driving.Licence.Application.Fraud + None.of.the.Above,
-         advance.fee.fraud = X.419..Advance.Fee.Fraud + Lottery.Scams + Fraud.Recovery +
+           DVLA.Driving.Licence.Application.Fraud + None.of.the.Above +
+           Application..Fraud..excluding.Mortgages. + Mortgage.Related.Fraud +
+           Cheque..Plastic.Card.and.Online.Bank.Accounts..not.PSP. +
+           Mandate.Fraud + Counterfeit.Cashiers.Cheques + Ticket.Fraud +
+           Retail.Fraud + Charity.Fraud,
+         investment.advance.fee = X.419..Advance.Fee.Fraud + Lottery.Scams + Fraud.Recovery +
            Inheritance.Fraud + Rental.Fraud + Other.Advance.Fee.Frauds + Lender.Loan.Fraud +
-           Dating.Scam,
-         Online.Shopping.and.Auctions = Online.Shopping.and.Auctions,
-         consumer.fraud.exc.on.shop = Consumer.Phone.Fraud + Door.to.Door.Sales.and.Bogus.Tradesmen +
-           Other.Consumer.Non.Investment.Fraud + Computer.Software.Service.Fraud,
+           Dating.Scam + Share.sales.or.Boiler.Room.Fraud + Pyramid.or.Ponzi.Schemes +
+           Prime.Bank.Guarantees + Time.Shares.and.Holiday.Club.Fraud +
+           Other.Financial.Investment,
+         Consumer.fraud.online = Online.Shopping.and.Auctions + Computer.Software.Service.Fraud +
+           Consumer.Phone.Fraud,
+         consumer.fraud.exc.on.shop = Door.to.Door.Sales.and.Bogus.Tradesmen +
+           Other.Consumer.Non.Investment.Fraud,
          cyberdependent = Denial.of.Service.Attack + Denial.of.Service.Attack..Extortion +
            Hacking...Server + Hacking...Personal + Hacking...Social.Media.and.Email +
-           Hacking...PBX...Dial.Through + Hacking.Extortion + Computer.Virus...Malware...Spyware,
-         investment.banking.credit.fraud = Cheque..Plastic.Card.and.Online.Bank.Accounts..not.PSP. +
-           Application..Fraud..excluding.Mortgages. + Mortgage.Related.Fraud +
-           Mandate.Fraud + Counterfeit.Cashiers.Cheques +
-           Share.sales.or.Boiler.Room.Fraud + Pyramid.or.Ponzi.Schemes +
-           Prime.Bank.Guarantees + Time.Shares.and.Holiday.Club.Fraud +
-           Other.Financial.Investment
+           Hacking...PBX...Dial.Through + Hacking.Extortion + Computer.Virus...Malware...Spyware
   )
 par(mfrow=c(3,2), mai = c(0.5, 0.3, 0.5, 0.1))
 
-#model and plot online shopping fraud
-modelit(data, data$Online.Shopping.and.Auctions,
+#model and plot investment and advance fee fraud
+modelit(data, data$investment.advance.fee,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-arimait.model(data, data$Online.Shopping.and.Auctions,
-        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
-
-arimait.coef(data, data$Online.Shopping.and.Auctions,
+arimait.model(data, data$investment.advance.fee,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-plot.online.shop <- function(){plotit(data, data$Online.Shopping.and.Auctions,
-                                      data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
-                                      "Online shopping fraud")}
-plot.online.shop()
+arimait.tests(data, data$investment.advance.fee,
+           data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-#model and plot advance fee fraud
-modelit(data, data$advance.fee.fraud,
-        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+arimait.coef(data, data$investment.advance.fee,
+             data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-arimait.model(data, data$advance.fee.fraud,
-        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+plot.investment.fraud <- function(){plotit(data, data$investment.advance.fee,
+                                         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
+                                         "Investment and advance fee fraud")}
+plot.investment.fraud()
 
-arimait.coef(data, data$advance.fee.fraud,
-              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
-
-plot.advance.fee <- function(){plotit(data, data$advance.fee.fraud,
-                                      data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
-                                      "Advance fee fraud")}
-plot.advance.fee()
-
-#model and plot consumer fraud
+#model and plot consumer fraud excluding online shopping
 modelit(data, data$consumer.fraud.exc.on.shop,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 arimait.model(data, data$consumer.fraud.exc.on.shop,
-        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
-
-arimait.coef(data, data$consumer.fraud.exc.on.shop,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-plot.consumer.fraud <- function(){plotit(data, data$consumer.fraud.exc.on.shop,
-                                         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
-                                         "Consumer fraud")}
-plot.consumer.fraud()
+arimait.tests(data, data$consumer.fraud.exc.on.shop,
+           data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-#model and plot investment and credit fraud
-modelit(data, data$investment.banking.credit.fraud,
+#estimate model (4, 5, 0)
+arima <- arima(x = ts(data$consumer.fraud.exc.on.shop), 
+               xreg = cbind(data$D1, data$P1, data$D2, data$P2, data$D3, data$P3),
+               order = c(4, 5, 0))
+
+durbinWatsonTest(as.vector(arima$residuals)) #tick
+
+Box.test(as.vector(arima$residuals), type = c("Ljung-Box")) #tick
+
+kpss.test(fitted(arima), null = "Trend") #tick
+
+summary(arima)
+
+round(cbind(coef = arima$coef,
+            LI = arima$coef - 1.06 * sqrt(diag(vcov(arima))),
+            UI = arima$coef + 1.06 * sqrt(diag(vcov(arima)))), 
+      digits = 1)
+
+plot.consumer.off.fraud <- function(){plotit(data, data$consumer.fraud.exc.on.shop,
+                                           data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
+                                           "Consumer fraud offline")}
+plot.consumer.off.fraud()
+
+#model and plot online consumer fraud
+modelit(data, data$Consumer.fraud.online,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-arimait.model(data, data$investment.banking.credit.fraud,
-        data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
-
-arimait.coef(data, data$investment.banking.credit.fraud,
+arimait.model(data, data$Consumer.fraud.online,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-plot.invest.fraud <- function(){plotit(data, data$investment.banking.credit.fraud,
-                                       data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
-                                       "Investment and credit fraud")}
-plot.invest.fraud()
+arimait.tests(data, data$Consumer.fraud.online,
+           data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+#estimate model (4, 5, 0)
+arima <- arima(x = ts(data$Consumer.fraud.online),
+               xreg = cbind(data$D1, data$P1, data$D2, data$P2, data$D3, data$P3),
+               order = c(4, 5, 0))
+
+durbinWatsonTest(as.vector(arima$residuals)) #tick
+
+Box.test(as.vector(arima$residuals), type = c("Ljung-Box")) #tick
+
+kpss.test(fitted(arima), null = "Trend") #tick
+
+summary(arima)
+
+round(cbind(coef = arima$coef,
+            LI = arima$coef - 1.06 * sqrt(diag(vcov(arima))),
+            UI = arima$coef + 1.06 * sqrt(diag(vcov(arima)))), 
+      digits = 1)
+
+plot.consumer.on.fraud <- function(){plotit(data, data$Consumer.fraud.online,
+                                             data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
+                                             "Consumer fraud online")}
+plot.consumer.on.fraud()
 
 #model and plot other fraud
 modelit(data, data$other.fraud,
@@ -498,12 +703,30 @@ modelit(data, data$other.fraud,
 arimait.model(data, data$other.fraud,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
-arimait.coef(data, data$other.fraud,
-              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+arimait.tests(data, data$other.fraud,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3) #tick
+
+#estimate model (5, 4, 0)
+arima <- arima(x = ts(data$other.fraud), 
+               xreg = cbind(data$D1, data$P1, data$D2, data$P2, data$D3, data$P3),
+                 order = c(5, 4, 0))
+
+durbinWatsonTest(as.vector(arima$residuals)) #tick
+
+Box.test(as.vector(arima$residuals), type = c("Ljung-Box")) #tick
+
+kpss.test(fitted(arima), null = "Trend") #tick
+
+summary(arima)
+
+round(cbind(coef = arima$coef,
+            LI = arima$coef - 1.06 * sqrt(diag(vcov(arima))),
+            UI = arima$coef + 1.06 * sqrt(diag(vcov(arima)))), 
+      digits = 1)
 
 plot.other.fraud <- function(){plotit(data, data$other.fraud,
-                                      data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
-                                      "Other fraud")}
+                                            data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3,
+                                            "Other fraud")}
 plot.other.fraud()
 
 #model and plot cyber-dependent crime
@@ -512,6 +735,9 @@ modelit(data, data$cyberdependent,
 
 arimait.model(data, data$cyberdependent,
         data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
+
+arimait.tests(data, data$cyberdependent,
+              data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
 
 arimait.coef(data, data$cyberdependent,
               data$T, data$D1, data$P1, data$D2, data$P2, data$D3, data$P3)
