@@ -159,10 +159,14 @@ plot.all <- function(){plotit(data, data$All.crime,
                                 data$S, "All crime")}
 plot.all()
 
-#all text
+#all text and legend
 text(57.5, 3500, "First lockdown \n 26/03/20", srt = 90, cex = 0.75)
 text(64.5, 3500, "Second lockdown \n 16/10/20", srt = 90, cex = 0.75)
 text(71.5, 3500, "Stay-at-home order \n 08/01/21", srt = 90, cex = 0.75)
+legend(1, 4000, legend = c("Predicted trend before COVID", "Predicted trend since COVID",
+                       "Counterfactual"),
+       col = c("dodgerblue4", "brown2", "dodgerblue2"), 
+       lty = c(1, 1, 4), lwd = c(3, 3, 3), cex = 0.8)
 
 #save figure: 9.49 x 3.60 inches
 
